@@ -8,22 +8,22 @@ public class ObjectReplacer : EditorWindow
     [MenuItem("GameObject/Replace Selected", false, 0)]
     public static void ShowWindow()
     {
-        var window = GetWindow<ObjectReplacer>(true, "Replace Selected");
-        window.minSize = window.maxSize = new Vector2(250f, 250f);
-        window.autoRepaintOnSceneChange = true;
-        window.Show();
+        var Window = GetWindow<ObjectReplacer>(true, "Replace Selected");
+        Window.minSize = Window.maxSize = new Vector2(250f, 250f);
+        Window.autoRepaintOnSceneChange = true;
+        Window.Show();
     }
 
-    [SerializeField] private Object replacementObject;
-    private Texture refreshIcon;
+    [SerializeField] private Object ReplacementObject;
+    private Texture RefreshIcon;
 
     private void OnEnable()
     {
-        refreshIcon = EditorGUIUtility.IconContent("Refresh").image;
-        if (replacementObject == null && !string.IsNullOrEmpty(StoredObjectGUID))
+        RefreshIcon = EditorGUIUtility.IconContent("Refresh").image;
+        if (ReplacementObject == null && !string.IsNullOrEmpty(StoredObjectGUID))
         {
-            string path = AssetDatabase.GUIDToAssetPath(StoredObjectGUID);
-            replacementObject = AssetDatabase.LoadAssetAtPath<Object>(path);
+            string Path = AssetDatabase.GUIDToAssetPath(StoredObjectGUID);
+            ReplacementObject = AssetDatabase.LoadAssetAtPath<Object>(Path);
         }
     }
 
@@ -48,16 +48,16 @@ public class ObjectReplacer : EditorWindow
         }
 
         EditorGUILayout.LabelField("Select Replacement Object", EditorStyles.boldLabel);
-        replacementObject = EditorGUILayout.ObjectField(replacementObject, typeof(GameObject), true);
+        ReplacementObject = EditorGUILayout.ObjectField(ReplacementObject, typeof(GameObject), true);
 
-        if (replacementObject != null)
+        if (ReplacementObject != null)
         {
-            StoredObjectGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(replacementObject));
+            StoredObjectGUID = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(ReplacementObject));
         }
 
         EditorGUILayout.Space();
 
-        if (replacementObject == null)
+        if (ReplacementObject == null)
         {
             EditorGUILayout.HelpBox("Select a valid object to replace with.", MessageType.Warning);
             return;
@@ -72,7 +72,7 @@ public class ObjectReplacer : EditorWindow
 
         EditorGUILayout.Space();
 
-        if (GUILayout.Button(new GUIContent($"Replace {Selection.gameObjects.Length} Objects", refreshIcon), GUILayout.Height(25f)))
+        if (GUILayout.Button(new GUIContent($"Replace {Selection.gameObjects.Length} Objects", RefreshIcon), GUILayout.Height(25f)))
         {
             ReplaceObjects();
         }
@@ -80,47 +80,47 @@ public class ObjectReplacer : EditorWindow
 
     private void ReplaceObjects()
     {
-        if (replacementObject == null || Selection.gameObjects.Length == 0)
+        if (ReplacementObject == null || Selection.gameObjects.Length == 0)
         {
             Debug.LogWarning("No valid objects selected for replacement.");
             return;
         }
 
-        bool isPrefab = PrefabUtility.GetPrefabAssetType(replacementObject) != PrefabAssetType.NotAPrefab;
-        List<GameObject> newSelection = new List<GameObject>();
+        bool IsPrefab = PrefabUtility.GetPrefabAssetType(ReplacementObject) != PrefabAssetType.NotAPrefab;
+        List<GameObject> NewSelection = new List<GameObject>();
 
-        foreach (GameObject selected in Selection.gameObjects)
+        foreach (GameObject Selected in Selection.gameObjects)
         {
-            GameObject newObject = ReplaceSingleObject(replacementObject, selected, isPrefab);
-            if (newObject) newSelection.Add(newObject);
+            GameObject NewObject = ReplaceSingleObject(ReplacementObject, Selected, IsPrefab);
+            if (NewObject) NewSelection.Add(NewObject);
         }
 
-        if (newSelection.Count > 0)
+        if (NewSelection.Count > 0)
         {
-            Selection.objects = newSelection.ToArray();
-            EditorSceneManager.MarkSceneDirty(newSelection[0].scene);
+            Selection.objects = NewSelection.ToArray();
+            EditorSceneManager.MarkSceneDirty(NewSelection[0].scene);
         }
     }
 
-    private static GameObject ReplaceSingleObject(Object source, GameObject target, bool sourceIsPrefab)
+    private static GameObject ReplaceSingleObject(Object Source, GameObject Target, bool SourceIsPrefab)
     {
-        if (!target.scene.IsValid()) return null;
+        if (!Target.scene.IsValid()) return null;
 
-        GameObject newObj = sourceIsPrefab ? PrefabUtility.InstantiatePrefab(source) as GameObject : Instantiate(source) as GameObject;
-        if (newObj == null) return null;
+        GameObject NewObj = SourceIsPrefab ? PrefabUtility.InstantiatePrefab(Source) as GameObject : Instantiate(Source) as GameObject;
+        if (NewObj == null) return null;
 
-        Undo.RegisterCreatedObjectUndo(newObj, "Replace Object");
-        newObj.transform.SetParent(target.transform.parent, true);
-        newObj.transform.SetSiblingIndex(target.transform.GetSiblingIndex());
-        newObj.transform.position = target.transform.position;
+        Undo.RegisterCreatedObjectUndo(NewObj, "Replace Object");
+        NewObj.transform.SetParent(Target.transform.parent, true);
+        NewObj.transform.SetSiblingIndex(Target.transform.GetSiblingIndex());
+        NewObj.transform.position = Target.transform.position;
 
-        if (PreserveName) newObj.name = target.name;
-        if (PreserveRotation) newObj.transform.rotation = target.transform.rotation;
-        if (PreserveScale) newObj.transform.localScale = target.transform.localScale;
-        if (PreserveTag) newObj.tag = target.tag;
-        if (PreserveLayer) newObj.layer = target.layer;
+        if (PreserveName) NewObj.name = Target.name;
+        if (PreserveRotation) NewObj.transform.rotation = Target.transform.rotation;
+        if (PreserveScale) NewObj.transform.localScale = Target.transform.localScale;
+        if (PreserveTag) NewObj.tag = Target.tag;
+        if (PreserveLayer) NewObj.layer = Target.layer;
 
-        Undo.DestroyObjectImmediate(target);
-        return newObj;
+        Undo.DestroyObjectImmediate(Target);
+        return NewObj;
     }
 }
